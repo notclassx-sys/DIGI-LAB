@@ -1,16 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
-// Use namespace import and cast to any to bypass broken react-router-dom types
 import * as RRD from 'react-router-dom';
 const { useNavigate } = RRD as any;
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../supabaseClient';
 import { Book } from '../types';
 import { MERCHANT_UPI_ID, MERCHANT_NAME, CURRENCY } from '../constants';
-import { ShoppingCart, X, AlertCircle, ExternalLink, Sparkles, BookOpen } from 'lucide-react';
+import { ShoppingCart, X, AlertCircle, ExternalLink, Sparkles, BookOpen, Crown, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Cast motion to any to bypass broken property types in the current environment
 const m = motion as any;
 
 interface StoreProps {
@@ -29,22 +27,13 @@ const Store: React.FC<StoreProps> = ({ user }) => {
   }, []);
 
   const fetchBooks = async () => {
-    const { data, error } = await supabase
-      .from('books')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setBooks(data);
-    }
+    const { data, error } = await supabase.from('books').select('*').order('created_at', { ascending: false });
+    if (!error && data) setBooks(data);
     setLoading(false);
   };
 
   const handleBuyNow = (book: Book) => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
+    if (!user) { navigate('/auth'); return; }
     setBuyingBook(book);
     setPurchaseStatus('pending');
   };
@@ -55,7 +44,7 @@ const Store: React.FC<StoreProps> = ({ user }) => {
     url.searchParams.append('pn', MERCHANT_NAME);
     url.searchParams.append('am', book.price.toString());
     url.searchParams.append('cu', CURRENCY);
-    url.searchParams.append('tn', `Purchase: ${book.title}`);
+    url.searchParams.append('tn', `Acquire: ${book.title}`);
     return url.toString();
   };
 
@@ -67,145 +56,151 @@ const Store: React.FC<StoreProps> = ({ user }) => {
       book_id: buyingBook.id,
       payment_status: 'pending'
     });
-
-    if (error) {
-      alert('Error recording purchase. Please contact support.');
-    } else {
-      alert('Your request is being processed. Once verified by Admin, the book will appear in your Library.');
+    if (!error) {
+      alert('Transaction Submitted. Verification in progress.');
       setBuyingBook(null);
       setPurchaseStatus('idle');
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <m.div 
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="h-10 w-10 border-4 border-green-100 border-t-green-500 rounded-full"
-        />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex justify-center items-center min-h-screen">
+      <m.div animate={{ rotate: 360 }} className="h-10 w-10 border-4 border-slate-100 border-t-emerald-600 rounded-full" />
+    </div>
+  );
 
   return (
-    <div className="space-y-20 pb-20">
+    <div className="pt-32 pb-40 space-y-40">
       {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-green-50 rounded-[100%] blur-[120px] -z-10 opacity-60"></div>
-        <div className="text-center space-y-6 max-w-4xl mx-auto px-6">
-          <m.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-bold uppercase tracking-widest border border-green-100"
-          >
-            <Sparkles size={14} /> Curated Luxury Collection
-          </m.div>
-          <m.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-6xl md:text-8xl font-serif font-bold text-gray-900 tracking-tight leading-tight"
-          >
-            Elevate Your <span className="green-text">Intellect</span>
-          </m.h1>
-          <m.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-gray-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed"
-          >
-            Step into the sanctuary of high-end digital literature. Exclusive insights, masterfully curated for the modern visionary.
-          </m.p>
+      <section className="relative px-6 flex flex-col items-center text-center">
+        <m.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="inline-flex items-center gap-3 px-6 py-2 rounded-full border border-emerald-100 bg-emerald-50/50 text-emerald-800 text-[9px] font-black uppercase tracking-[0.4em] mb-12"
+        >
+          <Crown size={12} className="text-[#d4af37]" /> The Collector's Choice
+        </m.div>
+        
+        <m.h1 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-7xl md:text-9xl font-serif font-bold text-slate-950 tracking-tight leading-none"
+        >
+          Private <span className="gold-text italic">Curations</span><br/>
+          <span className="text-emerald-900">Archived</span>
+        </m.h1>
+
+        <m.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl mt-12 leading-relaxed italic"
+        >
+          Explore a meticulously curated sanctuary of digital manuscripts, crafted for the visionary mind.
+        </m.p>
+      </section>
+
+      {/* Grid */}
+      <section className="px-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16">
+          {books.map((book, idx) => (
+            <m.div 
+              key={book.id} 
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx % 3 * 0.1, duration: 0.6 }}
+              className="luxury-card group p-10 rounded-[3rem] relative flex flex-col h-full overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1.5 green-gradient opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              
+              <div className="flex-grow">
+                <div className="w-16 h-16 rounded-[2rem] bg-slate-50 flex items-center justify-center text-emerald-800 mb-10 group-hover:bg-emerald-900 group-hover:text-white transition-all duration-500 shadow-inner">
+                  <BookOpen size={24} />
+                </div>
+                <h3 className="text-3xl font-serif font-bold text-slate-900 leading-tight mb-4 group-hover:text-emerald-800 transition-colors">
+                  {book.title}
+                </h3>
+                <p className="text-slate-400 text-sm leading-relaxed line-clamp-4 font-medium italic">
+                  {book.description}
+                </p>
+              </div>
+              
+              <div className="mt-12 pt-10 border-t border-slate-50 flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-[8px] uppercase tracking-[0.3em] text-[#d4af37] font-black">Investment</span>
+                  <span className="text-3xl font-extrabold text-slate-950 tracking-tighter">₹{book.price}</span>
+                </div>
+                <button 
+                  onClick={() => handleBuyNow(book)}
+                  className="btn-luxury px-9 py-4 rounded-2xl bg-slate-950 text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-2.5 shadow-xl shadow-slate-900/10 hover:bg-emerald-950"
+                >
+                  <ShoppingCart size={14} className="text-[#d4af37]" />
+                  Acquire
+                </button>
+              </div>
+            </m.div>
+          ))}
         </div>
       </section>
 
-      {/* Book Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 px-4">
-        {books.map((book, idx) => (
-          <m.div 
-            key={book.id} 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="group relative bg-white p-8 rounded-[2.5rem] border border-gray-100 hover:border-green-400 hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-500 flex flex-col h-full"
-          >
-            <div className="mb-6 flex-grow">
-              <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-green-600 mb-6 group-hover:bg-green-600 group-hover:text-white transition-colors duration-500">
-                <BookOpen size={28} />
-              </div>
-              <h3 className="text-2xl font-serif font-bold text-gray-900 mb-3 leading-tight group-hover:text-green-700 transition-colors">
-                {book.title}
-              </h3>
-              <p className="text-gray-500 text-sm font-medium leading-relaxed line-clamp-4">
-                {book.description}
-              </p>
-            </div>
-            
-            <div className="flex items-center justify-between pt-8 border-t border-gray-50">
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Investment</span>
-                <span className="text-2xl font-bold text-gray-900">₹{book.price}</span>
-              </div>
-              <button 
-                onClick={() => handleBuyNow(book)}
-                className="btn-luxury px-8 py-3.5 rounded-2xl bg-gray-900 text-white font-bold text-sm shadow-lg hover:green-gradient hover:shadow-green-500/20 transition-all flex items-center gap-2"
-              >
-                <ShoppingCart size={18} />
-                Acquire
-              </button>
-            </div>
-          </m.div>
-        ))}
-      </div>
-
-      {/* Checkout Modal */}
+      {/* Modal */}
       <AnimatePresence>
         {buyingBook && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <m.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setBuyingBook(null)}
-              className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
             />
             <m.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white border border-gray-100 w-full max-w-lg rounded-[3rem] overflow-hidden shadow-2xl"
+              exit={{ scale: 0.95, opacity: 0, y: 30 }}
+              className="relative bg-white w-full max-w-xl rounded-[4rem] overflow-hidden shadow-2xl border border-slate-100"
             >
-              <div className="p-8 border-b border-gray-50 flex justify-between items-center">
-                <h3 className="text-2xl font-serif font-bold text-gray-900">Secure Acquisition</h3>
-                <button onClick={() => setBuyingBook(null)} className="p-2 hover:bg-gray-50 rounded-full text-gray-400 transition-colors">
+              <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="text-emerald-700" size={24} />
+                  <div>
+                    <h3 className="text-2xl font-serif font-bold text-slate-900">Secure Settlement</h3>
+                    <p className="text-[8px] uppercase tracking-widest font-black text-[#d4af37] mt-0.5">Encrypted Acquisition Protocol</p>
+                  </div>
+                </div>
+                <button onClick={() => setBuyingBook(null)} className="p-3 hover:bg-white rounded-full text-slate-400 border border-transparent hover:border-slate-100 transition-all">
                   <X size={24} />
                 </button>
               </div>
               
-              <div className="p-10 space-y-8">
-                <div className="text-center space-y-2">
-                  <p className="text-gray-400 text-xs uppercase tracking-widest font-bold">Selected Title</p>
-                  <p className="text-3xl font-serif font-bold text-gray-900 leading-tight">{buyingBook.title}</p>
-                  <div className="inline-block px-4 py-1 rounded-full bg-green-50 text-green-700 font-bold text-xl mt-4">
+              <div className="p-12 space-y-10">
+                <div className="text-center space-y-3">
+                  <p className="text-slate-400 uppercase tracking-widest text-[9px] font-black">Authorized Unit</p>
+                  <p className="text-4xl font-serif font-bold text-slate-900 leading-tight">"{buyingBook.title}"</p>
+                  <div className="inline-block px-8 py-3 rounded-2xl bg-emerald-50 text-emerald-900 font-black text-2xl border border-emerald-100">
                     ₹{buyingBook.price}
                   </div>
                 </div>
 
-                <div className="bg-gray-50 border border-gray-100 p-6 rounded-3xl space-y-4">
-                  <div className="flex items-center gap-3 text-gray-900 font-bold">
-                    <div className="p-2 bg-white rounded-lg shadow-sm">
-                      <AlertCircle size={20} className="text-green-500" />
-                    </div>
-                    <span>Protocol for Payment</span>
+                <div className="bg-slate-50 rounded-[2.5rem] p-8 space-y-5 border border-slate-100">
+                  <div className="flex items-center gap-3 text-slate-900 font-black uppercase tracking-widest text-[10px]">
+                    <Sparkles size={14} className="text-[#d4af37]" />
+                    Acquisition Steps
                   </div>
-                  <ol className="text-sm text-gray-500 list-decimal list-inside space-y-3 font-medium">
-                    <li>Initialize payment via UPI deep link.</li>
-                    <li>Finalize the transfer in your secure app.</li>
-                    <li>Verify your transaction status below.</li>
-                    <li>Wait for the sanctuary gates to open.</li>
-                  </ol>
+                  <ul className="space-y-3">
+                    {[
+                      'Trigger payment via our secure UPI gateway.',
+                      'Finalize authentication in your banking vault.',
+                      'Submit the execution confirmation below.',
+                      'Verification usually completes within 60 minutes.'
+                    ].map((step, i) => (
+                      <li key={i} className="flex gap-4 text-xs text-slate-500 font-semibold italic">
+                        <span className="text-emerald-800 font-black">{i + 1}.</span> {step}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 <div className="space-y-4">
@@ -213,19 +208,17 @@ const Store: React.FC<StoreProps> = ({ user }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     href={getUPILink(buyingBook)}
-                    className="flex items-center justify-center gap-3 w-full py-5 rounded-2xl green-gradient text-white font-bold text-lg shadow-xl shadow-green-500/20 hover:shadow-green-500/40 transition-all"
+                    className="flex items-center justify-center gap-3 w-full py-6 rounded-[2rem] bg-emerald-900 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-emerald-900/20"
                   >
-                    Pay via UPI <ExternalLink size={20} />
+                    Launch UPI Portal <ExternalLink size={18} />
                   </m.a>
                   
                   <button 
                     onClick={confirmPayment}
                     disabled={purchaseStatus === 'confirming'}
-                    className="w-full py-5 rounded-2xl bg-gray-50 text-gray-900 font-bold hover:bg-gray-100 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-6 rounded-[2rem] bg-slate-50 text-slate-900 font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-colors border border-slate-100 flex items-center justify-center gap-2"
                   >
-                    {purchaseStatus === 'confirming' ? (
-                      <m.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-5 h-5 border-2 border-gray-300 border-t-gray-900 rounded-full" />
-                    ) : 'I Have Completed Payment'}
+                    {purchaseStatus === 'confirming' ? 'Verifying...' : 'Notify Curator of Execution'}
                   </button>
                 </div>
               </div>

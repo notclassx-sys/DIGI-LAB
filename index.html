@@ -6,73 +6,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SNIPX Digital Library | Premium Knowledge</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
     <style>
       :root {
-        --primary: #22c55e;
-        --primary-dark: #16a34a;
-        --accent: #d4af37; /* Gold for classiness */
+        --primary: #064e3b;
+        --accent: #d4af37;
+        --gold-light: #f1d382;
+        --obsidian: #020617;
       }
       body {
         font-family: 'Plus Jakarta Sans', sans-serif;
         background-color: #ffffff;
-        color: #1a1a1a;
+        color: #0f172a;
         overflow-x: hidden;
       }
       .font-serif {
         font-family: 'Instrument Serif', serif;
       }
-      .green-gradient {
-        background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+      .font-display {
+        font-family: 'Cormorant+Garamond', serif;
       }
-      .green-text {
-        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      .gold-text {
+        background: linear-gradient(135deg, #d4af37 0%, #f1d382 50%, #d4af37 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
       }
-      .glass-card {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(229, 231, 235, 0.5);
+      .green-gradient {
+        background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
+      }
+      .glass-nav {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+      }
+      .luxury-card {
+        background: #ffffff;
+        border: 1px solid rgba(229, 231, 235, 0.8);
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      .luxury-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 30px 60px -12px rgba(6, 78, 59, 0.12);
+        border-color: var(--accent);
       }
       .btn-luxury {
         position: relative;
         overflow: hidden;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
       }
       .btn-luxury::after {
         content: '';
         position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-        transition: 0.5s;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
       }
       .btn-luxury:hover::after {
-        left: 100%;
+        transform: translateX(100%);
       }
-      @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-        100% { transform: translateY(0px); }
+      @keyframes shine {
+        0% { background-position: -200% center; }
+        100% { background-position: 200% center; }
       }
-      .float-animation {
-        animation: float 6s ease-in-out infinite;
+      .animate-shine {
+        background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+        background-size: 200% 100%;
+        animation: shine 3s infinite linear;
       }
       ::-webkit-scrollbar {
         width: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #f1f5f9;
+        background: #f8fafc;
       }
       ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: #e2e8f0;
         border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+        background: var(--accent);
       }
     </style>
     <script type="importmap">
@@ -91,5 +104,6 @@
   </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
   </body>
 </html>

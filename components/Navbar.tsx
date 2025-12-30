@@ -1,14 +1,12 @@
 
 import React from 'react';
-// Use namespace import and cast to any to bypass broken react-router-dom types
 import * as RRD from 'react-router-dom';
 const { Link, useLocation } = RRD as any;
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../supabaseClient';
-import { LogOut, Library, LayoutDashboard, Store, User as UserIcon, BookMarked } from 'lucide-react';
+import { LogOut, LayoutGrid, Library, Settings, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-// Cast motion to any to bypass broken property types in the current environment
 const m = motion as any;
 
 interface NavbarProps {
@@ -18,92 +16,86 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ user, isAdmin }) => {
   const location = useLocation();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
-
+  const handleLogout = async () => await supabase.auth.signOut();
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-gray-100">
-      <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3 group">
+    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 py-6 pointer-events-none">
+      <m.nav 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="w-full max-w-5xl h-20 glass-nav rounded-[2.5rem] flex items-center justify-between px-8 luxury-shadow border border-white/40 shadow-2xl pointer-events-auto"
+      >
+        <Link to="/" className="flex items-center gap-4 group">
           <m.div 
             whileHover={{ scale: 1.05, rotate: 5 }}
-            className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center shadow-lg border-2 border-green-500 overflow-hidden"
+            className="w-11 h-11 bg-slate-950 rounded-2xl flex items-center justify-center shadow-lg border border-[#d4af37]"
           >
-             {/* Using a high-quality icon as a logo placeholder that fits the luxury/professional vibe */}
-             <div className="relative w-full h-full flex items-center justify-center">
-                <span className="text-white font-serif font-bold text-xl italic relative z-10">SA</span>
-                <div className="absolute inset-0 bg-gradient-to-tr from-green-600/30 to-transparent"></div>
-             </div>
+            <span className="text-[#d4af37] font-serif font-bold text-xl italic">SA</span>
           </m.div>
           <div className="flex flex-col">
-            <span className="text-xl font-bold tracking-tight text-gray-900">
-              SNIPX <span className="text-green-600 font-serif italic text-2xl ml-0.5">Library</span>
+            <span className="text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-1.5 leading-none mb-1">
+              SNIPX <span className="text-emerald-800 font-serif italic text-2xl font-light">Archive</span>
             </span>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-semibold leading-none">
-              The Digital Sanctuary
+            <span className="text-[8px] uppercase tracking-[0.4em] text-[#d4af37] font-black leading-none">
+              Elite Digital Sanctuary
             </span>
           </div>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
-          <Link 
-            to="/" 
-            className={`text-sm font-semibold transition-all duration-300 relative py-2 ${isActive('/') ? 'text-green-600' : 'text-gray-500 hover:text-green-600'}`}
-          >
-            Store
-            {isActive('/') && <m.div layoutId="navline" className="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 rounded-full" />}
-          </Link>
-          
-          {user && (
+        <div className="hidden md:flex items-center gap-1">
+          {[
+            { name: 'Collection', path: '/', icon: LayoutGrid },
+            ...(user ? [{ name: 'My Vault', path: '/library', icon: Library }] : []),
+            ...(isAdmin ? [{ name: 'Command', path: '/admin', icon: Settings }] : [])
+          ].map((item) => (
             <Link 
-              to="/library" 
-              className={`text-sm font-semibold transition-all duration-300 relative py-2 ${isActive('/library') ? 'text-green-600' : 'text-gray-500 hover:text-green-600'}`}
+              key={item.path}
+              to={item.path} 
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-black transition-all duration-500 relative ${
+                isActive(item.path) 
+                ? 'text-emerald-900 bg-emerald-50' 
+                : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'
+              }`}
             >
-              My Library
-              {isActive('/library') && <m.div layoutId="navline" className="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 rounded-full" />}
+              <item.icon size={14} className={isActive(item.path) ? 'text-emerald-600' : ''} />
+              {item.name}
+              {isActive(item.path) && (
+                <m.div 
+                  layoutId="active-pill" 
+                  className="absolute inset-0 bg-emerald-50 rounded-full -z-10 border border-emerald-100/50"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
             </Link>
-          )}
-
-          {isAdmin && (
-            <Link 
-              to="/admin" 
-              className={`text-sm font-semibold transition-all duration-300 relative py-2 ${isActive('/admin') ? 'text-green-600' : 'text-gray-500 hover:text-green-600'}`}
-            >
-              Console
-              {isActive('/admin') && <m.div layoutId="navline" className="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 rounded-full" />}
-            </Link>
-          )}
+          ))}
         </div>
 
         <div className="flex items-center gap-4">
           {user ? (
-            <div className="flex items-center gap-3 pl-4 border-l border-gray-100">
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-100">
               <div className="hidden sm:block text-right">
-                <p className="text-xs font-bold text-gray-900 leading-none">{user.email?.split('@')[0]}</p>
-                <p className="text-[10px] text-gray-400 font-medium mt-1">Reader Member</p>
+                <p className="text-[8px] uppercase tracking-[0.2em] font-black text-[#d4af37]">Collector</p>
+                <p className="text-xs font-bold text-slate-900 truncate max-w-[100px]">{user.email?.split('@')[0]}</p>
               </div>
               <button 
                 onClick={handleLogout}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-300"
+                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all border border-slate-100 shadow-sm"
               >
-                <LogOut size={18} />
+                <LogOut size={16} />
               </button>
             </div>
           ) : (
             <Link 
               to="/auth" 
-              className="btn-luxury px-6 py-2.5 rounded-full green-gradient text-white font-bold text-sm shadow-xl shadow-green-500/20 hover:shadow-green-500/40"
+              className="btn-luxury px-8 py-3.5 rounded-2xl bg-emerald-900 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-900/10 hover:shadow-emerald-900/30 hover:-translate-y-0.5"
             >
-              Sign In
+              Verified Sign-In
             </Link>
           )}
         </div>
-      </div>
-    </nav>
+      </m.nav>
+    </div>
   );
 };
 
