@@ -1,0 +1,5 @@
+{
+  "name": "SNIPX Digital Library",
+  "description": "A premium, secure digital bookstore featuring Google Auth, UPI payments, and strict PDF access control via Supabase signed URLs.",
+  "requestFramePermissions": []
+}
