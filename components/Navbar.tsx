@@ -20,77 +20,76 @@ const Navbar: React.FC<NavbarProps> = ({ user, isAdmin }) => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 py-6 pointer-events-none">
+    <div className="sticky top-0 left-0 right-0 z-50 w-full px-2 py-4 md:px-4 md:py-6 flex justify-center">
       <m.nav 
-        initial={{ y: -50, opacity: 0 }}
+        initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-5xl h-20 glass-nav rounded-[2.5rem] flex items-center justify-between px-8 luxury-shadow border border-white/40 shadow-2xl pointer-events-auto"
+        className="w-full max-w-5xl h-16 md:h-20 glass-nav rounded-2xl md:rounded-[2.5rem] flex items-center justify-between px-4 md:px-8 border border-white/40 shadow-xl overflow-hidden"
       >
-        <Link to="/" className="flex items-center gap-4 group">
+        <Link to="/" className="flex items-center gap-2 md:gap-4 group shrink-0">
           <m.div 
-            whileHover={{ scale: 1.05, rotate: 5 }}
-            className="w-11 h-11 bg-slate-950 rounded-2xl flex items-center justify-center shadow-lg border border-[#d4af37]"
+            whileHover={{ scale: 1.05 }}
+            className="w-9 h-9 md:w-11 md:h-11 bg-slate-950 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg border border-[#d4af37] shrink-0"
           >
-            <span className="text-[#d4af37] font-serif font-bold text-xl italic">SA</span>
+            <span className="text-[#d4af37] font-serif font-bold text-base md:text-xl italic">SA</span>
           </m.div>
           <div className="flex flex-col">
-            <span className="text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-1.5 leading-none mb-1">
-              SNIPX <span className="text-emerald-800 font-serif italic text-2xl font-light">Archive</span>
+            <span className="text-sm md:text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-1 leading-none mb-0.5 md:mb-1">
+              SNIPX <span className="text-emerald-800 font-serif italic text-base md:text-2xl font-light">Library</span>
             </span>
-            <span className="text-[8px] uppercase tracking-[0.4em] text-[#d4af37] font-black leading-none">
-              Elite Digital Sanctuary
+            <span className="hidden xs:block text-[7px] md:text-[8px] uppercase tracking-[0.3em] text-[#d4af37] font-black leading-none">
+              Elite Sanctuary
             </span>
           </div>
         </Link>
 
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden sm:flex items-center gap-1 md:gap-2">
           {[
-            { name: 'Collection', path: '/', icon: LayoutGrid },
+            { name: 'Books', path: '/', icon: LayoutGrid },
             ...(user ? [{ name: 'My Vault', path: '/library', icon: Library }] : []),
             ...(isAdmin ? [{ name: 'Command', path: '/admin', icon: Settings }] : [])
           ].map((item) => (
             <Link 
               key={item.path}
               to={item.path} 
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-black transition-all duration-500 relative ${
+              className={`flex items-center gap-1.5 px-3 py-2 md:px-5 md:py-2.5 rounded-full text-[9px] md:text-[10px] uppercase tracking-widest font-black transition-all duration-300 relative ${
                 isActive(item.path) 
                 ? 'text-emerald-900 bg-emerald-50' 
-                : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'
+                : 'text-slate-400 hover:text-slate-900'
               }`}
             >
-              <item.icon size={14} className={isActive(item.path) ? 'text-emerald-600' : ''} />
-              {item.name}
+              <item.icon size={12} className={isActive(item.path) ? 'text-emerald-600' : ''} />
+              <span className="hidden md:inline">{item.name}</span>
               {isActive(item.path) && (
                 <m.div 
                   layoutId="active-pill" 
                   className="absolute inset-0 bg-emerald-50 rounded-full -z-10 border border-emerald-100/50"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 />
               )}
             </Link>
           ))}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4 shrink-0">
           {user ? (
-            <div className="flex items-center gap-3 pl-4 border-l border-slate-100">
-              <div className="hidden sm:block text-right">
-                <p className="text-[8px] uppercase tracking-[0.2em] font-black text-[#d4af37]">Collector</p>
-                <p className="text-xs font-bold text-slate-900 truncate max-w-[100px]">{user.email?.split('@')[0]}</p>
+            <div className="flex items-center gap-2 md:gap-3 pl-2 md:pl-4 border-l border-slate-100">
+              <div className="hidden md:block text-right">
+                <p className="text-[7px] uppercase tracking-widest font-black text-[#d4af37]">Collector</p>
+                <p className="text-[10px] font-bold text-slate-900 truncate max-w-[80px]">{user.email?.split('@')[0]}</p>
               </div>
               <button 
                 onClick={handleLogout}
-                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all border border-slate-100 shadow-sm"
+                className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all border border-slate-100 shadow-sm"
               >
-                <LogOut size={16} />
+                <LogOut size={14} />
               </button>
             </div>
           ) : (
             <Link 
               to="/auth" 
-              className="btn-luxury px-8 py-3.5 rounded-2xl bg-emerald-900 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-900/10 hover:shadow-emerald-900/30 hover:-translate-y-0.5"
+              className="btn-luxury px-5 py-2.5 md:px-8 md:py-3.5 rounded-xl md:rounded-2xl bg-emerald-900 text-white font-black text-[9px] md:text-[10px] uppercase tracking-widest shadow-lg hover:-translate-y-0.5 transition-transform"
             >
-              Verified Sign-In
+              Login
             </Link>
           )}
         </div>
