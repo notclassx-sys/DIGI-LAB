@@ -6,16 +6,12 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '../supabaseClient';
 import { Book } from '../types';
 import { MERCHANT_UPI_ID, MERCHANT_NAME, CURRENCY } from '../constants';
-import { ShoppingCart, X, ExternalLink, Sparkles, BookOpen, Crown, ShieldCheck, Copy, Check, ArrowRight, Zap, Image as ImageIcon } from 'lucide-react';
+import { ShoppingCart, X, ExternalLink, Sparkles, BookOpen, Crown, ShieldCheck, Copy, Check, Star, Zap, Info, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const m = motion as any;
 
-interface StoreProps {
-  user: User | null;
-}
-
-const Store: React.FC<StoreProps> = ({ user }) => {
+const Store: React.FC<{ user: User | null }> = ({ user }) => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [buyingBook, setBuyingBook] = useState<Book | null>(null);
@@ -24,29 +20,18 @@ const Store: React.FC<StoreProps> = ({ user }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchBooks = async () => {
+      const { data } = await supabase.from('books').select('*').order('created_at', { ascending: false });
+      if (data) setBooks(data);
+      setLoading(false);
+    };
     fetchBooks();
   }, []);
-
-  const fetchBooks = async () => {
-    const { data, error } = await supabase.from('books').select('*').order('created_at', { ascending: false });
-    if (!error && data) setBooks(data);
-    setLoading(false);
-  };
 
   const handleBuyNow = (book: Book) => {
     if (!user) { navigate('/auth'); return; }
     setBuyingBook(book);
     setPurchaseStatus('pending');
-  };
-
-  const getUPILink = (book: Book) => {
-    const url = new URL('upi://pay');
-    url.searchParams.append('pa', MERCHANT_UPI_ID);
-    url.searchParams.append('pn', MERCHANT_NAME);
-    url.searchParams.append('am', book.price.toString());
-    url.searchParams.append('cu', CURRENCY);
-    url.searchParams.append('tn', `SNIPX: ${book.title}`);
-    return url.toString();
   };
 
   const copyUPI = () => {
@@ -64,7 +49,7 @@ const Store: React.FC<StoreProps> = ({ user }) => {
       payment_status: 'pending'
     });
     if (!error) {
-      alert('Transaction Submitted. Verification in progress. Please allow 15-60 mins for verification.');
+      alert('Order Placed! Please allow 15-60 mins for curator verification.');
       setBuyingBook(null);
       setPurchaseStatus('idle');
     }
@@ -72,161 +57,155 @@ const Store: React.FC<StoreProps> = ({ user }) => {
 
   if (loading) return (
     <div className="flex justify-center items-center min-h-[50vh]">
-      <m.div animate={{ rotate: 360 }} className="h-10 w-10 border-4 border-slate-100 border-t-emerald-600 rounded-full" />
+      <m.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, ease: "linear", duration: 1 }} className="h-8 w-8 border-2 border-slate-200 border-t-accent rounded-full" />
     </div>
   );
 
   return (
-    <div className="pb-20 space-y-12">
-      {/* Hero Section with single line heading */}
-      <section className="text-center py-20 px-4 space-y-8 max-w-7xl mx-auto overflow-hidden">
+    <div className="pb-24">
+      {/* Hero Section - Scaled for Mobile */}
+      <section className="px-4 pt-6 pb-10 text-center space-y-4 max-w-4xl mx-auto">
         <m.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-emerald-50/50 border border-emerald-100/50 text-emerald-800 text-[10px] font-black uppercase tracking-[0.3em]"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-900 text-[8px] font-bold uppercase tracking-widest"
         >
           <Crown size={12} className="text-accent" /> THE COLLECTOR'S CHOICE
         </m.div>
         
-        <m.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-[9.5rem] font-display font-bold text-obsidian leading-[1.1] md:leading-[0.85] tracking-tight"
-        >
-          Private <span className="font-serif italic gold-text">Curations</span> <span className="text-emerald-900">Archived</span>
-        </m.h1>
+        <h1 className="text-3xl md:text-6xl font-display font-bold text-obsidian leading-tight tracking-tight">
+          Private <span className="font-serif italic gold-text">Curations</span> Archived
+        </h1>
 
-        <m.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-slate-500 font-medium italic text-lg md:text-xl max-w-2xl mx-auto leading-relaxed pt-4"
-        >
-          Explore a meticulously curated sanctuary of digital manuscripts, crafted for the visionary mind.
-        </m.p>
+        <p className="text-slate-400 font-medium text-xs md:text-lg max-w-xl mx-auto leading-relaxed px-4">
+          A meticulously curated sanctuary of digital manuscripts, crafted for the visionary mind.
+        </p>
       </section>
 
-      {/* Grid with correct font application */}
-      <section className="px-4 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {books.map((book, idx) => (
-          <m.div 
-            key={book.id} 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: idx * 0.05 }}
-            className="bg-white rounded-[3.5rem] p-12 flex flex-col h-full border border-slate-50 shadow-sm hover:shadow-2xl transition-all duration-500 group relative"
-          >
-            <div className="mb-10 relative">
-              <div className="w-24 h-32 rounded-[2rem] bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-100 shadow-inner group-hover:border-emerald-200 transition-colors">
+      {/* Grid Container */}
+      <div className="px-2 md:px-6 max-w-7xl mx-auto">
+        {/* Meesho Style 2-Column Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-6">
+          {books.map((book, idx) => (
+            <m.div 
+              key={book.id} 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: idx * 0.05 }}
+              onClick={() => handleBuyNow(book)}
+              className="product-card group flex flex-col cursor-pointer"
+            >
+              {/* Product Visual */}
+              <div className="aspect-[3/4] bg-slate-50 relative overflow-hidden">
                 {book.thumbnail_path ? (
                   <img 
                     src={supabase.storage.from('books_public').getPublicUrl(book.thumbnail_path).data.publicUrl} 
                     alt={book.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <BookOpen size={32} className="text-emerald-800" />
+                  <div className="w-full h-full flex items-center justify-center text-slate-200">
+                    <BookOpen size={32} />
+                  </div>
                 )}
+                <div className="absolute top-2 left-2 bg-white/90 backdrop-blur px-2 py-0.5 rounded text-[7px] font-black uppercase text-emerald-900 shadow-sm border border-slate-100">
+                  Premium
+                </div>
               </div>
-            </div>
 
-            <div className="flex-grow space-y-4">
-              <h3 className="text-4xl font-display font-bold text-obsidian leading-none tracking-tight group-hover:text-emerald-900 transition-colors uppercase">
-                {book.title}
-              </h3>
-              <p className="text-slate-400 font-medium text-base italic leading-relaxed line-clamp-4 pt-2">
-                {book.description}
-              </p>
-            </div>
+              {/* Product Info */}
+              <div className="p-2.5 md:p-5 flex flex-col flex-grow">
+                <div className="flex-grow">
+                  <h3 className="text-[11px] md:text-sm font-bold text-obsidian line-clamp-2 leading-snug h-8 md:h-10">
+                    {book.title}
+                  </h3>
+                  <div className="flex items-center gap-1 mt-1">
+                    <div className="flex text-accent">
+                      {[...Array(5)].map((_, i) => <Star key={i} size={8} className="fill-current" />)}
+                    </div>
+                    <span className="text-[8px] text-slate-400 font-bold">(4.9)</span>
+                  </div>
+                </div>
 
-            <div className="mt-14 pt-10 border-t border-slate-50 flex items-end justify-between">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-accent uppercase tracking-[0.2em]">Investment</p>
-                <p className="text-5xl font-black text-obsidian leading-none tracking-tighter">₹{book.price}</p>
+                <div className="mt-2.5 space-y-2">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-sm md:text-xl font-black text-obsidian">₹{book.price}</span>
+                    <span className="text-[9px] text-slate-400 line-through">₹{Math.round(book.price * 1.5)}</span>
+                  </div>
+                  
+                  <button className="w-full py-2 md:py-3 bg-obsidian text-white rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-1.5">
+                    Acquire <ArrowUpRight size={10} />
+                  </button>
+                </div>
               </div>
-              <button 
-                onClick={() => handleBuyNow(book)}
-                className="flex items-center gap-2.5 px-10 py-5 bg-obsidian text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-emerald-950 transition-all active:scale-95"
-              >
-                <ShoppingCart size={18} className="text-accent" /> Acquire
-              </button>
-            </div>
-          </m.div>
-        ))}
-      </section>
+            </m.div>
+          ))}
+        </div>
+      </div>
 
-      {/* Modal - Reverted to clean aesthetic */}
+      {/* Checkout Sheet (Mobile-first modal) */}
       <AnimatePresence>
         {buyingBook && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
             <m.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setBuyingBook(null)}
-              className="absolute inset-0 bg-obsidian/60 backdrop-blur-md"
+              className="absolute inset-0 bg-obsidian/40 backdrop-blur-sm"
             />
             <m.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white w-full max-w-md rounded-[4rem] overflow-hidden shadow-2xl"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] overflow-hidden shadow-2xl p-6 md:p-10 space-y-8"
             >
-              <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                <div className="flex items-center gap-4">
-                  <ShieldCheck className="text-emerald-700" size={28} />
-                  <span className="font-display font-bold text-2xl text-obsidian">Secure Entry</span>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="text-emerald-600" size={20} />
+                  <span className="font-bold text-sm text-obsidian uppercase tracking-widest">Secure Checkout</span>
                 </div>
-                <button onClick={() => setBuyingBook(null)} className="p-2 text-slate-400 hover:text-obsidian transition-colors">
+                <button onClick={() => setBuyingBook(null)} className="p-2 text-slate-300">
                   <X size={24} />
                 </button>
               </div>
 
-              <div className="p-12 space-y-10">
-                <div className="text-center space-y-3">
-                  <p className="text-6xl font-black text-obsidian tracking-tighter">₹{buyingBook.price}</p>
-                  <p className="text-slate-500 font-bold text-sm italic uppercase tracking-widest">"{buyingBook.title}"</p>
+              <div className="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="w-16 h-20 bg-white rounded-lg border border-slate-200 overflow-hidden shrink-0">
+                  {buyingBook.thumbnail_path && <img src={supabase.storage.from('books_public').getPublicUrl(buyingBook.thumbnail_path).data.publicUrl} className="w-full h-full object-cover" />}
                 </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-xs text-obsidian uppercase">{buyingBook.title}</h4>
+                  <div className="text-xl font-black text-obsidian">₹{buyingBook.price}</div>
+                  <p className="text-[8px] text-emerald-600 font-black uppercase tracking-widest bg-emerald-50 inline-block px-2 py-0.5 rounded">Digital Delivery</p>
+                </div>
+              </div>
 
-                <div className="bg-slate-50 rounded-[3rem] p-10 space-y-8 border border-slate-100">
-                  <div className="space-y-3">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">RECIPIENT GATEWAY</p>
-                    <div className="flex items-center justify-between gap-4 p-5 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm">
-                      <code className="text-[12px] font-black text-obsidian truncate tracking-tight">{MERCHANT_UPI_ID}</code>
-                      <button onClick={copyUPI} className="shrink-0 p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all">
-                        {copied ? <Check size={18} /> : <Copy size={18} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-black text-accent uppercase tracking-[0.2em] flex items-center gap-2 ml-2">
-                      <Sparkles size={14} /> PROTOCOL
-                    </p>
-                    <ol className="text-[12px] text-slate-500 font-semibold italic space-y-3 ml-2">
-                      <li className="flex gap-3"><span>1.</span> Dispatch UPI settlement</li>
-                      <li className="flex gap-3"><span>2.</span> Archive transaction visual</li>
-                      <li className="flex gap-3"><span>3.</span> Trigger verification below</li>
-                    </ol>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Merchant UPI</p>
+                  <div className="flex items-center justify-between gap-3 p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+                    <code className="text-[11px] font-black text-obsidian truncate">{MERCHANT_UPI_ID}</code>
+                    <button onClick={copyUPI} className="shrink-0 p-2 text-emerald-600">
+                      {copied ? <Check size={18} /> : <Copy size={18} />}
+                    </button>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <m.a 
-                    whileTap={{ scale: 0.98 }}
-                    href={getUPILink(buyingBook)}
-                    className="md:hidden flex items-center justify-center gap-3 w-full py-6 bg-emerald-900 text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-xl"
+                <div className="grid grid-cols-1 gap-2">
+                   <a 
+                    href={`upi://pay?pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${buyingBook.price}&cu=INR&tn=Order_${buyingBook.id.slice(0,8)}`}
+                    className="flex items-center justify-center gap-2 w-full py-4 bg-emerald-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg !no-underline"
                   >
-                    DEPLOY UPI PORTAL <ExternalLink size={16} />
-                  </m.a>
+                    Pay with UPI App <Zap size={12} className="fill-white" />
+                  </a>
                   <button 
                     onClick={confirmPayment}
                     disabled={purchaseStatus === 'confirming'}
-                    className="w-full py-6 bg-obsidian text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl hover:bg-emerald-950 transition-all disabled:opacity-50"
+                    className="w-full py-4 bg-obsidian text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-950 transition-all disabled:opacity-50"
                   >
-                    {purchaseStatus === 'confirming' ? 'TRANSMITTING...' : 'I HAVE SETTLED (NOTIFY)'}
+                    {purchaseStatus === 'confirming' ? 'Notifying Curators...' : 'I Have Paid (Confirm)'}
                   </button>
                 </div>
               </div>

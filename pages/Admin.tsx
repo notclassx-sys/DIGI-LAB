@@ -5,8 +5,7 @@ const { Routes, Route, Link, useNavigate } = RRD as any;
 import { supabase } from '../supabaseClient';
 import { Book, Purchase } from '../types';
 import { 
-  Plus, Trash2, Edit3, CreditCard, CheckCircle, XCircle, 
-  Book as BookIcon, Package, Upload, Loader2, Save, X, ArrowLeft, PlusCircle, AlertTriangle, ShieldCheck as Shield, Image as ImageIcon
+  Trash2, Book as BookIcon, Package, Upload, Loader2, ArrowLeft, PlusCircle, AlertTriangle, ShieldCheck as Shield, Image as ImageIcon, Check, X as XIcon, CreditCard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -30,38 +29,43 @@ const AdminDashboard = () => {
   }, []);
 
   return (
-    <div className="space-y-12 pb-20">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="max-w-7xl mx-auto px-6 space-y-20 pb-40">
+      <div className="space-y-4">
+        <h1 className="text-6xl font-display font-bold text-obsidian uppercase">Control <span className="italic font-serif gold-text">Nexus</span></h1>
+        <p className="text-[10px] font-black text-accent uppercase tracking-[0.4em]">Administrative Oversight Protocol</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
         {[
-          { label: 'Catalog', val: stats.books, icon: BookIcon, col: 'text-blue-500', bg: 'bg-blue-50' },
-          { label: 'Revenue Units', val: stats.sales, icon: Package, col: 'text-green-500', bg: 'bg-green-50' },
-          { label: 'Awaiting Verification', val: stats.pending, icon: CreditCard, col: 'text-orange-500', bg: 'bg-orange-50' }
+          { label: 'Collection Size', val: stats.books, icon: BookIcon, color: 'emerald' },
+          { label: 'Settled Assets', val: stats.sales, icon: Package, color: 'accent' },
+          { label: 'Pending Audits', val: stats.pending, icon: Shield, color: 'blue' }
         ].map((stat, i) => (
           <m.div 
             key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm"
+            className="bg-white p-10 rounded-[3rem] border border-slate-50 shadow-sm hover:shadow-xl transition-all"
           >
-            <div className="flex items-center justify-between mb-6">
-              <div className={`p-3 ${stat.bg} ${stat.col} rounded-2xl`}>
+            <div className="flex items-center justify-between mb-8">
+              <div className={`p-4 bg-slate-50 rounded-2xl text-obsidian border border-slate-100`}>
                 <stat.icon size={24} />
               </div>
-              <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">{stat.label}</span>
+              <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{stat.label}</span>
             </div>
-            <p className="text-4xl font-serif font-bold text-gray-900">{stat.val}</p>
+            <p className="text-6xl font-black text-obsidian tracking-tighter">{stat.val}</p>
           </m.div>
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-4 p-4 bg-white/50 border border-slate-100 rounded-[2.5rem] w-full md:w-fit backdrop-blur-sm">
-        <Link to="add-book" className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white shadow-xl hover:bg-emerald-900 transition-all font-black text-xs uppercase tracking-widest">
-          <PlusCircle size={18} className="text-[#d4af37]" />
-          Add New Book
+      <div className="flex flex-wrap gap-6 p-6 bg-slate-50/50 rounded-[3rem] border border-slate-100 w-fit">
+        <Link to="add-book" className="flex items-center gap-3 px-10 py-5 rounded-2xl bg-obsidian text-white shadow-xl hover:bg-emerald-950 transition-all font-black text-[10px] uppercase tracking-widest">
+          <PlusCircle size={16} className="text-accent" />
+          Add Manuscript
         </Link>
-        <Link to="books" className="px-8 py-4 rounded-2xl bg-white text-slate-900 shadow-sm hover:bg-slate-50 transition-all font-black text-xs border border-slate-100 uppercase tracking-widest">Manage Catalog</Link>
-        <Link to="purchases" className="px-8 py-4 rounded-2xl bg-white text-slate-900 shadow-sm hover:bg-slate-50 transition-all font-black text-xs border border-slate-100 uppercase tracking-widest">Verify Payments</Link>
+        <Link to="books" className="px-10 py-5 rounded-2xl bg-white text-obsidian shadow-sm hover:bg-slate-100 transition-all font-black text-[10px] border border-slate-100 uppercase tracking-widest">Archive Management</Link>
+        <Link to="purchases" className="px-10 py-5 rounded-2xl bg-white text-obsidian shadow-sm hover:bg-slate-100 transition-all font-black text-[10px] border border-slate-100 uppercase tracking-widest">Settlement Audit</Link>
       </div>
     </div>
   );
@@ -77,29 +81,20 @@ const AddBookPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg(null);
     if (!pdfFile || !thumbFile) {
-      setErrorMsg("Both manuscript (PDF) and thumbnail (Image) are required.");
+      setErrorMsg("Both visual and manuscript assets are required.");
       return;
     }
     setLoading(true);
-
     try {
-      // 1. Upload Thumbnail to PUBLIC bucket (so users can see it without signed URL)
       const thumbName = `thumb-${Date.now()}-${thumbFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const { data: thumbData, error: thumbError } = await supabase.storage
-        .from('books_public')
-        .upload(thumbName, thumbFile);
+      const { data: thumbData, error: thumbError } = await supabase.storage.from('books_public').upload(thumbName, thumbFile);
       if (thumbError) throw thumbError;
 
-      // 2. Upload PDF to PRIVATE bucket
       const pdfName = `pdf-${Date.now()}-${pdfFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const { data: pdfData, error: pdfError } = await supabase.storage
-        .from('books_private')
-        .upload(pdfName, pdfFile);
+      const { data: pdfData, error: pdfError } = await supabase.storage.from('books_private').upload(pdfName, pdfFile);
       if (pdfError) throw pdfError;
 
-      // 3. Save to DB
       const { error: insertError } = await supabase.from('books').insert({
         title: formData.title,
         description: formData.description,
@@ -107,28 +102,25 @@ const AddBookPage = () => {
         pdf_path: pdfData.path,
         thumbnail_path: thumbData.path
       });
-
       if (insertError) throw insertError;
 
-      alert("Manuscript published successfully.");
       navigate('/admin/books');
     } catch (err: any) {
-      console.error(err);
-      setErrorMsg(err.message || "Archival protocol failure.");
+      setErrorMsg(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12 pb-20">
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/admin')} className="p-3 bg-white rounded-2xl border border-slate-100 text-slate-400 hover:text-slate-900 transition-all">
-          <ArrowLeft size={20} />
+    <div className="max-w-4xl mx-auto px-6 space-y-12 pb-40">
+      <div className="flex items-center gap-6">
+        <button onClick={() => navigate('/admin')} className="p-4 bg-white rounded-2xl border border-slate-100 text-slate-400 hover:text-obsidian transition-all shadow-sm">
+          <ArrowLeft size={24} />
         </button>
-        <div>
-          <h2 className="text-4xl font-serif font-bold text-slate-900">Archival Protocol</h2>
-          <p className="text-[10px] uppercase tracking-widest font-black text-[#d4af37] mt-1">Expansion of the Digital Sanctuary</p>
+        <div className="space-y-1">
+          <h2 className="text-4xl font-display font-bold text-obsidian uppercase">Archive Expansion</h2>
+          <p className="text-[10px] uppercase tracking-widest font-black text-accent">Protocol of Publication</p>
         </div>
       </div>
 
@@ -136,70 +128,68 @@ const AddBookPage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         onSubmit={handleSubmit}
-        className="bg-white p-10 md:p-16 rounded-[3rem] border border-slate-100 shadow-2xl space-y-10"
+        className="bg-white p-12 md:p-20 rounded-[4rem] border border-slate-50 shadow-2xl space-y-12"
       >
         <AnimatePresence>
           {errorMsg && (
-            <m.div className="p-6 bg-red-50 border border-red-100 rounded-3xl flex items-start gap-4">
-              <AlertTriangle className="text-red-500 shrink-0 mt-1" size={20} />
+            <m.div className="p-8 bg-red-50 border border-red-100 rounded-[2rem] flex items-start gap-4">
+              <AlertTriangle className="text-red-500 shrink-0 mt-1" size={24} />
               <div className="space-y-1">
-                <p className="text-red-800 font-bold text-sm uppercase tracking-wider">System Conflict</p>
-                <p className="text-red-600 text-xs italic">{errorMsg}</p>
+                <p className="text-red-900 font-black text-[10px] uppercase tracking-widest">Protocol Failure</p>
+                <p className="text-red-600 text-sm italic font-medium">{errorMsg}</p>
               </div>
             </m.div>
           )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Book Name</label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Manuscript Title</label>
             <input 
-              type="text" 
-              required
-              className="w-full bg-slate-50 text-slate-900 p-5 rounded-2xl outline-none border border-transparent focus:border-emerald-500 transition-all font-bold"
+              type="text" required
+              className="w-full bg-slate-50 text-obsidian p-6 rounded-2xl outline-none border border-transparent focus:border-accent transition-all font-bold text-lg"
               value={formData.title}
               onChange={e => setFormData({...formData, title: e.target.value})}
             />
           </div>
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Price (INR)</label>
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Investment Value (INR)</label>
             <input 
-              type="number" 
-              required
-              className="w-full bg-slate-50 text-slate-900 p-5 rounded-2xl outline-none border border-transparent focus:border-emerald-500 transition-all font-bold"
+              type="number" required
+              className="w-full bg-slate-50 text-obsidian p-6 rounded-2xl outline-none border border-transparent focus:border-accent transition-all font-bold text-lg tracking-tight"
               value={formData.price}
               onChange={e => setFormData({...formData, price: e.target.value})}
             />
           </div>
         </div>
 
-        <div className="space-y-3">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Description</label>
+        <div className="space-y-4">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Archive Description</label>
           <textarea 
             required
-            className="w-full bg-slate-50 text-slate-900 p-6 rounded-[2rem] outline-none border border-transparent focus:border-emerald-500 transition-all h-32 font-medium italic"
+            className="w-full bg-slate-50 text-obsidian p-8 rounded-[2.5rem] outline-none border border-transparent focus:border-accent transition-all h-40 font-medium italic text-lg leading-relaxed"
             value={formData.description}
             onChange={e => setFormData({...formData, description: e.target.value})}
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           <div className="space-y-4">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Thumbnail (Image)</label>
-            <label className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-slate-100 rounded-[2rem] bg-slate-50/50 hover:bg-emerald-50/30 cursor-pointer transition-all">
-              <ImageIcon className="text-slate-300 mb-2" size={24} />
-              <span className="text-[10px] font-bold text-slate-500 truncate max-w-full px-4">
-                {thumbFile ? thumbFile.name : "Select Image"}
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Visual Asset (Thumbnail)</label>
+            <label className="flex flex-col items-center justify-center w-full p-12 border-2 border-dashed border-slate-100 rounded-[3rem] bg-slate-50/50 hover:bg-emerald-50/20 cursor-pointer transition-all">
+              <ImageIcon className="text-slate-300 mb-4" size={32} />
+              <span className="text-xs font-black text-slate-500 uppercase tracking-widest truncate max-w-full px-4">
+                {thumbFile ? thumbFile.name : "Upload Visual"}
               </span>
               <input type="file" className="hidden" accept="image/*" onChange={e => setThumbFile(e.target.files?.[0] || null)} />
             </label>
           </div>
           <div className="space-y-4">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Manuscript (PDF)</label>
-            <label className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-slate-100 rounded-[2rem] bg-slate-50/50 hover:bg-emerald-50/30 cursor-pointer transition-all">
-              <Upload className="text-slate-300 mb-2" size={24} />
-              <span className="text-[10px] font-bold text-slate-500 truncate max-w-full px-4">
-                {pdfFile ? pdfFile.name : "Select PDF"}
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Data Manuscript (PDF)</label>
+            <label className="flex flex-col items-center justify-center w-full p-12 border-2 border-dashed border-slate-100 rounded-[3rem] bg-slate-50/50 hover:bg-emerald-50/20 cursor-pointer transition-all">
+              <Upload className="text-slate-300 mb-4" size={32} />
+              <span className="text-xs font-black text-slate-500 uppercase tracking-widest truncate max-w-full px-4">
+                {pdfFile ? pdfFile.name : "Upload PDF"}
               </span>
               <input type="file" className="hidden" accept="application/pdf" onChange={e => setPdfFile(e.target.files?.[0] || null)} />
             </label>
@@ -209,9 +199,9 @@ const AddBookPage = () => {
         <button 
           type="submit" 
           disabled={loading}
-          className="w-full py-6 rounded-[2rem] bg-slate-950 text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 hover:bg-emerald-950 disabled:opacity-50 transition-all"
+          className="w-full py-8 rounded-[2rem] bg-obsidian text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:bg-emerald-950 disabled:opacity-50 transition-all active:scale-[0.98]"
         >
-          {loading ? <Loader2 className="animate-spin" size={20} /> : <><Shield size={18} className="text-[#d4af37]" /> Publish Collection</>}
+          {loading ? <Loader2 className="animate-spin" size={24} /> : <><Shield size={20} className="text-accent" /> Execute Publication</>}
         </button>
       </m.form>
     </div>
@@ -220,18 +210,13 @@ const AddBookPage = () => {
 
 const ManageBooks = () => {
   const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => { fetchBooks(); }, []);
-
   const fetchBooks = async () => {
     const { data } = await supabase.from('books').select('*').order('created_at', { ascending: false });
     if (data) setBooks(data);
-    setLoading(false);
   };
-
   const deleteBook = async (book: Book) => {
-    if (!confirm('Permanent deletion from the archive. Proceed?')) return;
+    if (!confirm('Permanent deletion from the sanctuary archives. Proceed?')) return;
     await supabase.from('books').delete().eq('id', book.id);
     if (book.pdf_path) await supabase.storage.from('books_private').remove([book.pdf_path]);
     if (book.thumbnail_path) await supabase.storage.from('books_public').remove([book.thumbnail_path]);
@@ -239,26 +224,27 @@ const ManageBooks = () => {
   };
 
   return (
-    <div className="space-y-12 pb-20">
-      <div className="flex justify-between items-center">
-        <h2 className="text-4xl font-serif font-bold text-slate-900">Archive Management</h2>
-        <Link to="/admin/add-book" className="px-8 py-4 bg-emerald-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">New Manuscript</Link>
+    <div className="max-w-5xl mx-auto px-6 space-y-12 pb-40">
+      <div className="flex justify-between items-end">
+        <div className="space-y-1">
+          <h2 className="text-4xl font-display font-bold text-obsidian uppercase">Archive Roster</h2>
+          <p className="text-[10px] uppercase tracking-widest font-black text-accent">Active Collection Manifest</p>
+        </div>
+        <Link to="/admin/add-book" className="px-10 py-5 bg-obsidian text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">New Entry</Link>
       </div>
-      <div className="grid gap-4">
+      <div className="grid gap-6">
         {books.map(book => (
-          <div key={book.id} className="bg-white p-6 rounded-3xl border border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              {book.thumbnail_path ? (
-                <img src={supabase.storage.from('books_public').getPublicUrl(book.thumbnail_path).data.publicUrl} className="w-16 h-20 object-cover rounded-xl shadow-sm" />
-              ) : (
-                <div className="w-16 h-20 bg-slate-50 rounded-xl flex items-center justify-center"><BookIcon className="text-slate-200" /></div>
-              )}
-              <div>
-                <div className="font-bold text-slate-900 text-lg">{book.title}</div>
-                <div className="text-emerald-700 font-bold text-sm">₹{book.price}</div>
+          <div key={book.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-50 flex items-center justify-between shadow-sm hover:shadow-md transition-all">
+            <div className="flex items-center gap-10">
+              <div className="w-20 h-28 bg-slate-50 rounded-2xl overflow-hidden shadow-inner border border-slate-100 flex items-center justify-center">
+                 {book.thumbnail_path ? <img src={supabase.storage.from('books_public').getPublicUrl(book.thumbnail_path).data.publicUrl} className="w-full h-full object-cover" /> : <BookIcon className="text-slate-200" />}
+              </div>
+              <div className="space-y-1">
+                <div className="font-bold text-obsidian text-2xl uppercase tracking-tight">{book.title}</div>
+                <div className="text-accent font-black text-sm tracking-widest uppercase">₹{book.price}</div>
               </div>
             </div>
-            <button onClick={() => deleteBook(book)} className="p-4 bg-red-50 text-red-400 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18} /></button>
+            <button onClick={() => deleteBook(book)} className="p-6 bg-red-50 text-red-400 rounded-3xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={24} strokeWidth={1.5} /></button>
           </div>
         ))}
       </div>
@@ -268,40 +254,43 @@ const ManageBooks = () => {
 
 const ManagePurchases = () => {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => { fetchPurchases(); }, []);
-
   const fetchPurchases = async () => {
     const { data } = await supabase.from('purchases').select('*, book:books(*)').order('created_at', { ascending: false });
     if (data) setPurchases(data);
-    setLoading(false);
   };
-
   const updateStatus = async (id: string, status: string) => {
     await supabase.from('purchases').update({ payment_status: status }).eq('id', id);
     fetchPurchases();
   };
 
   return (
-    <div className="space-y-12 pb-20">
-      <h2 className="text-4xl font-serif font-bold text-slate-900">Payment Verification</h2>
-      <div className="grid gap-6">
+    <div className="max-w-5xl mx-auto px-6 space-y-12 pb-40">
+       <div className="space-y-1">
+          <h2 className="text-4xl font-display font-bold text-obsidian uppercase">Settlement Audit</h2>
+          <p className="text-[10px] uppercase tracking-widest font-black text-accent">Financial Transaction Oversight</p>
+        </div>
+      <div className="grid gap-8">
         {purchases.map(p => (
-          <div key={p.id} className="bg-white border border-slate-100 p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between shadow-sm">
-            <div className="flex items-center gap-6 w-full">
-               <div className="w-16 h-20 bg-slate-50 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
-                 {p.book?.thumbnail_path ? <img src={supabase.storage.from('books_public').getPublicUrl(p.book.thumbnail_path).data.publicUrl} className="w-full h-full object-cover" /> : <CreditCard />}
+          <div key={p.id} className="bg-white border border-slate-100 p-10 rounded-[3rem] flex flex-col md:flex-row items-center justify-between shadow-sm">
+            <div className="flex items-center gap-8 w-full">
+               <div className="w-20 h-24 bg-slate-50 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner">
+                 {p.book?.thumbnail_path ? <img src={supabase.storage.from('books_public').getPublicUrl(p.book.thumbnail_path).data.publicUrl} className="w-full h-full object-cover" /> : <CreditCard size={32} className="text-slate-200" />}
                </div>
-               <div>
-                 <div className="text-slate-900 font-bold text-xl">{p.book?.title}</div>
-                 <div className="text-[10px] font-black uppercase tracking-widest text-[#d4af37]">{p.payment_status}</div>
+               <div className="space-y-2">
+                 <div className="text-obsidian font-bold text-2xl uppercase tracking-tight leading-none">{p.book?.title}</div>
+                 <div className="flex items-center gap-3">
+                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status:</span>
+                   <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${p.payment_status === 'completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-orange-50 text-orange-600'}`}>
+                     {p.payment_status}
+                   </span>
+                 </div>
                </div>
             </div>
             {p.payment_status === 'pending' && (
-              <div className="flex gap-4 mt-6 md:mt-0">
-                <button onClick={() => updateStatus(p.id, 'completed')} className="px-6 py-3 bg-emerald-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest">Approve</button>
-                <button onClick={() => updateStatus(p.id, 'failed')} className="px-6 py-3 bg-red-50 text-red-500 rounded-xl font-black text-[10px] uppercase tracking-widest">Deny</button>
+              <div className="flex gap-4 mt-8 md:mt-0 w-full md:w-auto">
+                <button onClick={() => updateStatus(p.id, 'completed')} className="flex-1 md:flex-none px-8 py-4 bg-emerald-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-950 transition-all shadow-xl shadow-emerald-900/10">Approve</button>
+                <button onClick={() => updateStatus(p.id, 'failed')} className="flex-1 md:flex-none px-8 py-4 bg-red-50 text-red-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Reject</button>
               </div>
             )}
           </div>
