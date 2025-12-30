@@ -6,7 +6,7 @@ import { supabase } from '../supabaseClient';
 import { Book, Purchase } from '../types';
 import { 
   Plus, Trash2, Edit3, CreditCard, CheckCircle, XCircle, 
-  Book as BookIcon, Package, Upload, Loader2, Save, X, ArrowLeft, PlusCircle, AlertTriangle
+  Book as BookIcon, Package, Upload, Loader2, Save, X, ArrowLeft, PlusCircle, AlertTriangle, ShieldCheck as Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -78,26 +78,30 @@ const AddBookPage = () => {
     e.preventDefault();
     setErrorMsg(null);
     if (!pdfFile) {
-      alert("Please upload a PDF file.");
+      setErrorMsg("Please select a PDF manuscript to continue.");
       return;
     }
     setLoading(true);
 
     try {
-      const fileName = `${Date.now()}-${pdfFile.name}`;
+      const fileName = `${Date.now()}-${pdfFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       
+      // DIAGNOSTIC CHECK: Does the bucket exist?
+      const { data: buckets, error: bucketCheckError } = await supabase.storage.listBuckets();
+      const hasBucket = buckets?.some(b => b.id === 'books_private');
+      
+      if (!hasBucket) {
+        throw new Error('BUCKET MISSING: The "books_private" bucket was not found. 1. Go to Supabase Storage. 2. Create a PRIVATE bucket named "books_private".');
+      }
+
       // Attempt upload to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('books_private')
-        .upload(fileName, pdfFile);
+        .upload(fileName, pdfFile, { cacheControl: '3600', upsert: false });
       
-      if (uploadError) {
-        if (uploadError.message.includes('Bucket not found')) {
-          throw new Error('DEPLOYMENT ERROR: The "books_private" storage bucket does not exist. Please go to Supabase Storage and create a PRIVATE bucket named "books_private".');
-        }
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
+      // Insert record into books table
       const { error: insertError } = await supabase.from('books').insert({
         title: formData.title,
         description: formData.description,
@@ -107,10 +111,11 @@ const AddBookPage = () => {
 
       if (insertError) throw insertError;
 
-      alert("Book successfully added to the private archive.");
+      alert("Manuscript archived successfully.");
       navigate('/admin/books');
     } catch (err: any) {
-      setErrorMsg(err.message);
+      console.error(err);
+      setErrorMsg(err.message || "An unexpected error occurred during encryption.");
     } finally {
       setLoading(false);
     }
@@ -123,7 +128,7 @@ const AddBookPage = () => {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h2 className="text-4xl font-serif font-bold text-slate-900">Add New Manuscript</h2>
+          <h2 className="text-4xl font-serif font-bold text-slate-900">Archival Protocol</h2>
           <p className="text-[10px] uppercase tracking-widest font-black text-[#d4af37] mt-1">Expansion of the Digital Sanctuary</p>
         </div>
       </div>
@@ -144,8 +149,8 @@ const AddBookPage = () => {
             >
               <AlertTriangle className="text-red-500 shrink-0 mt-1" size={20} />
               <div className="space-y-1">
-                <p className="text-red-800 font-bold text-sm">System Conflict</p>
-                <p className="text-red-600 text-xs leading-relaxed">{errorMsg}</p>
+                <p className="text-red-800 font-bold text-sm uppercase tracking-wider">System Conflict Detected</p>
+                <p className="text-red-600 text-xs leading-relaxed font-medium italic">{errorMsg}</p>
               </div>
             </m.div>
           )}
@@ -218,8 +223,8 @@ const AddBookPage = () => {
             <Loader2 className="animate-spin" size={20} />
           ) : (
             <>
-              <Save size={18} className="text-[#d4af37]" />
-              Publish to Private Archive
+              <Shield size={18} className="text-[#d4af37]" />
+              Securely Publish Manuscript
             </>
           )}
         </button>
