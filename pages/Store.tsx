@@ -6,7 +6,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '../supabaseClient';
 import { Book } from '../types';
 import { MERCHANT_UPI_ID, MERCHANT_NAME, CURRENCY } from '../constants';
-import { ShoppingCart, X, AlertCircle, ExternalLink, Sparkles, BookOpen, Crown, ShieldCheck } from 'lucide-react';
+import { ShoppingCart, X, AlertCircle, ExternalLink, Sparkles, BookOpen, Crown, ShieldCheck, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const m = motion as any;
@@ -20,6 +20,7 @@ const Store: React.FC<StoreProps> = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [buyingBook, setBuyingBook] = useState<Book | null>(null);
   const [purchaseStatus, setPurchaseStatus] = useState<'idle' | 'pending' | 'confirming'>('idle');
+  const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,8 +45,14 @@ const Store: React.FC<StoreProps> = ({ user }) => {
     url.searchParams.append('pn', MERCHANT_NAME);
     url.searchParams.append('am', book.price.toString());
     url.searchParams.append('cu', CURRENCY);
-    url.searchParams.append('tn', `Acquire: ${book.title}`);
+    url.searchParams.append('tn', `SNIPX: ${book.title}`);
     return url.toString();
+  };
+
+  const copyUPI = () => {
+    navigator.clipboard.writeText(MERCHANT_UPI_ID);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const confirmPayment = async () => {
@@ -57,7 +64,7 @@ const Store: React.FC<StoreProps> = ({ user }) => {
       payment_status: 'pending'
     });
     if (!error) {
-      alert('Transaction Submitted. Verification in progress.');
+      alert('Transaction Submitted. Verification in progress. Please allow 15-60 mins for verification.');
       setBuyingBook(null);
       setPurchaseStatus('idle');
     }
@@ -181,22 +188,40 @@ const Store: React.FC<StoreProps> = ({ user }) => {
                   <p className="text-slate-500 font-bold text-sm italic">"{buyingBook.title}"</p>
                 </div>
 
-                <div className="bg-slate-50 rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 space-y-4 border border-slate-100">
-                  <div className="flex items-center gap-2 text-slate-900 font-black uppercase tracking-widest text-[9px] md:text-[10px]">
-                    <Sparkles size={12} className="text-[#d4af37]" />
-                    Process
+                <div className="bg-slate-50 rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6 border border-slate-100">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <span>Recipient Identity</span>
+                      {copied && <span className="text-emerald-600 flex items-center gap-1"><Check size={10}/> Copied</span>}
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 group">
+                      <code className="flex-grow text-xs font-bold text-slate-900 truncate tracking-tight">{MERCHANT_UPI_ID}</code>
+                      <button 
+                        onClick={copyUPI}
+                        className="p-2 bg-slate-50 text-slate-400 hover:text-emerald-600 rounded-xl transition-all"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </div>
                   </div>
-                  <ul className="space-y-2">
-                    {[
-                      'Trigger payment via UPI portal.',
-                      'Submit execution confirmation.',
-                      'Access granted within 60 mins.'
-                    ].map((step, i) => (
-                      <li key={i} className="flex gap-3 text-xs text-slate-500 font-semibold italic">
-                        <span className="text-emerald-800 font-black">{i + 1}.</span> {step}
-                      </li>
-                    ))}
-                  </ul>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-slate-900 font-black uppercase tracking-widest text-[9px] md:text-[10px]">
+                      <Sparkles size={12} className="text-[#d4af37]" />
+                      Instructions
+                    </div>
+                    <ul className="space-y-2">
+                      {[
+                        'Pay via UPI (PhonePe/GPay/Paytm)',
+                        'Save your transaction screenshot',
+                        'Click "Notify Curator" below'
+                      ].map((step, i) => (
+                        <li key={i} className="flex gap-3 text-[11px] text-slate-500 font-semibold italic">
+                          <span className="text-emerald-800 font-black">{i + 1}.</span> {step}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -204,7 +229,7 @@ const Store: React.FC<StoreProps> = ({ user }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     href={getUPILink(buyingBook)}
-                    className="flex items-center justify-center gap-2 w-full py-5 rounded-2xl bg-emerald-900 text-white font-black text-[10px] uppercase tracking-[0.15em] shadow-xl"
+                    className="flex md:hidden items-center justify-center gap-2 w-full py-5 rounded-2xl bg-emerald-900 text-white font-black text-[10px] uppercase tracking-[0.15em] shadow-xl"
                   >
                     Launch UPI Portal <ExternalLink size={16} />
                   </m.a>
@@ -212,10 +237,11 @@ const Store: React.FC<StoreProps> = ({ user }) => {
                   <button 
                     onClick={confirmPayment}
                     disabled={purchaseStatus === 'confirming'}
-                    className="w-full py-5 rounded-2xl bg-slate-50 text-slate-900 font-black text-[9px] uppercase tracking-widest hover:bg-slate-100 border border-slate-100"
+                    className="w-full py-5 rounded-2xl bg-slate-950 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-950 shadow-2xl transition-all disabled:opacity-50"
                   >
-                    {purchaseStatus === 'confirming' ? 'Notifying Curator...' : 'Notify Curator'}
+                    {purchaseStatus === 'confirming' ? 'Notifying Curator...' : 'Notify Curator (I Have Paid)'}
                   </button>
+                  <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest">Access granted after manual verification</p>
                 </div>
               </div>
             </m.div>

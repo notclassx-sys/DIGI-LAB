@@ -6,7 +6,7 @@ import { supabase } from '../supabaseClient';
 import { Book, Purchase } from '../types';
 import { 
   Plus, Trash2, Edit3, CreditCard, CheckCircle, XCircle, 
-  Book as BookIcon, Package, Upload, Loader2, Save, X, ArrowLeft, PlusCircle
+  Book as BookIcon, Package, Upload, Loader2, Save, X, ArrowLeft, PlusCircle, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -72,9 +72,11 @@ const AddBookPage = () => {
   const [formData, setFormData] = useState({ title: '', description: '', price: '' });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     if (!pdfFile) {
       alert("Please upload a PDF file.");
       return;
@@ -83,11 +85,18 @@ const AddBookPage = () => {
 
     try {
       const fileName = `${Date.now()}-${pdfFile.name}`;
+      
+      // Attempt upload to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('books_private')
         .upload(fileName, pdfFile);
       
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        if (uploadError.message.includes('Bucket not found')) {
+          throw new Error('DEPLOYMENT ERROR: The "books_private" storage bucket does not exist. Please go to Supabase Storage and create a PRIVATE bucket named "books_private".');
+        }
+        throw uploadError;
+      }
 
       const { error: insertError } = await supabase.from('books').insert({
         title: formData.title,
@@ -101,7 +110,7 @@ const AddBookPage = () => {
       alert("Book successfully added to the private archive.");
       navigate('/admin/books');
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      setErrorMsg(err.message);
     } finally {
       setLoading(false);
     }
@@ -125,6 +134,23 @@ const AddBookPage = () => {
         onSubmit={handleSubmit}
         className="bg-white p-10 md:p-16 rounded-[3rem] border border-slate-100 shadow-2xl space-y-10"
       >
+        <AnimatePresence>
+          {errorMsg && (
+            <m.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="p-6 bg-red-50 border border-red-100 rounded-3xl flex items-start gap-4"
+            >
+              <AlertTriangle className="text-red-500 shrink-0 mt-1" size={20} />
+              <div className="space-y-1">
+                <p className="text-red-800 font-bold text-sm">System Conflict</p>
+                <p className="text-red-600 text-xs leading-relaxed">{errorMsg}</p>
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           <div className="space-y-3">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Book Name</label>
@@ -169,7 +195,7 @@ const AddBookPage = () => {
             </div>
             <span className="text-slate-500 font-bold text-sm tracking-tight text-center">
               {pdfFile ? (
-                <span className="text-emerald-700">{pdfFile.name}</span>
+                <span className="text-emerald-700 font-black">{pdfFile.name}</span>
               ) : (
                 "Drop your PDF here or click to browse secure storage"
               )}
@@ -186,7 +212,7 @@ const AddBookPage = () => {
         <button 
           type="submit" 
           disabled={loading}
-          className="w-full py-6 rounded-[2rem] bg-slate-950 text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 hover:bg-emerald-950 disabled:opacity-50"
+          className="w-full py-6 rounded-[2rem] bg-slate-950 text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 hover:bg-emerald-950 disabled:opacity-50 transition-all"
         >
           {loading ? (
             <Loader2 className="animate-spin" size={20} />
